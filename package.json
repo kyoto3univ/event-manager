@@ -1,0 +1,15 @@
+{
+  "name": "event-manager",
+  "version": "1.0.0",
+  "repository": "https://github.com/kyoto3univ/event-manager",
+  "author": "f0reachARR <f0reach@f0reach.me>",
+  "license": "MIT",
+  "workspaces": [
+    "functions"
+  ],
+  "private": true,
+  "devDependencies": {
+    "prettier": "^2.0.5",
+    "tslint": "^6.1.2"
+  }
+}
