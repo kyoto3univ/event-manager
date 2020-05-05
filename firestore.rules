@@ -1,7 +1,61 @@
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write;
+    function isAuthenticated() {
+      return request.auth != null && request.auth.token.email_verified;
+    }
+
+    function isAdminRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).role == 'ADMIN';
+    }
+
+    function isEditorRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).role == 'EDITOR';
+    }
+
+    // イベント一覧DB
+    match /events/{eventId} {
+      allow get; // イベント単体はだれでも取得できる
+      allow create: if isAuthenticated() && checkCreator(); // イベント作成は編集可能リストに自身のみが入ることを確認
+      allow update, delete, list: if isEditable(); // 管理者と編集可能リスト内の人が削除と更新と一覧取得できる（はず）
+
+      function checkCreator() {
+        return (isAdminRole() || isEditorRole()) &&
+          request.resource.data.editors is list &&
+          request.resource.data.editors.size() == 1 &&
+          request.auth.uid in request.resource.data.editors;
+      }
+
+      function isEditable() {
+        return isAdminRole() || request.auth.uid in resource.data.editors;
+      }
+
+      // 参加者DB
+      match /participants/{userId} {
+        allow get: if isEditable() || checkUserIsSelf(userId); // 編集できる人か自身が取得できる
+        allow create, delete: if checkUserIsSelf(userId); // 自身のみが作成・削除できる
+        allow update: if isEditable(); // 編集可能な人が変更できる（参加承認など推定）
+        allow list: if isEditable();
+
+        function checkUserIsSelf(userId) {
+          return userId == request.auth.uid;
+        }
+      }
+    }
+
+    // 特権ユーザ（editor, admin）用ユーザDB
+    match /users/{userId} {
+      allow create, delete: if isAuthenticated() && isAdminRole(); // 管理者のみ作成・削除可能
+      allow list: if isAuthenticated() && (isAdminRole() || isEditorRole()); // 管理者と編集者が一覧表示可能
+      allow update: if isAuthenticated() && (checkUpdate() || isAdminRole()); // 管理者とアカウント本人が更新可能
+      allow get: if isAuthenticated() && (checkUserIsSelf(userId) || isAdminRole()); // 管理者とアカウント本人が取得可能
+
+      function checkUserIsSelf(userId) {
+        return userId == request.auth.uid;
+      }
+
+      function checkUpdate() {
+        return checkUserIsSelf() && request.resource.data.role == resource.data.role;
+      }
     }
   }
 }
