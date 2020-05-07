@@ -2,12 +2,8 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function checkMailAddress() {
-      return request.auth.token.email.matches('.*@edu[.]kit[.]ac[.]jp');
-    }
-
     function isAuthenticated() {
-      return request.auth != null && request.auth.token.email_verified && checkMailAddress();
+      return request.auth != null && request.auth.token.email_verified;
     }
 
     function isAdminRole() {
@@ -22,12 +18,13 @@ service cloud.firestore {
     match /events/{eventId} {
       allow get: if resource.data.published == true || isEditable(); // イベント単体は公開されていれば誰でも取得できる
       allow create: if checkCreator(); // イベント作成は編集可能リストに自身のみが入ることを確認
-      allow update, delete, list: if isEditable(); // 管理者と編集可能リスト内の人が削除と更新できる（はず）
+      allow delete, list: if isEditable(); // 管理者と編集可能リスト内の人が削除と更新できる（はず）
+      allow update: if isEditable() && checkTypes();
 
       function checkCreator() {
         return isAuthenticated() &&
           (isAdminRole() || isEditorRole()) &&
-          request.resource.data.editors is list &&
+          checkTypes() &&
           request.resource.data.editors.size() == 1 &&
           request.auth.uid in request.resource.data.editors;
       }
@@ -36,42 +33,78 @@ service cloud.firestore {
         return isAuthenticated() && (isAdminRole() || request.auth.uid in resource.data.editors);
       }
 
-      // 参加者DB
-      match /participants/{userId} {
-        allow get: if isEditable() || checkUserIsSelf(userId); // 編集できる人か自身が取得できる
-        allow create: if checkCreate(); // 自身のみが作成できる（参加承認を除く）
-        allow delete: if checkUserIsSelf(userId); // 自身のみが削除できる
-        allow update, list: if isEditable(); // 編集可能な人が変更できる（参加承認など推定）
-
-        function checkUserIsSelf(userId) {
-          return isAuthenticated() && userId == request.auth.uid;
-        }
-
-        function checkCreate() {
-          return checkUserIsSelf(userId) &&
-            request.resource.data.accepted is bool &&
-            request.resource.data.accepted != true;
-        }
+      function checkTypes() {
+        return request.resource.data.title is string &&
+          request.resource.data.description is string &&
+          request.resource.data.startAt is timestamp &&
+          request.resource.data.published is bool &&
+          request.resource.data.editors is list;
       }
 
-      // メールコンテンツと通知コンテンツ用(会場リンクなど)
+      // メールコンテンツと通知コンテンツ用
       match /secrets/{contentId} {
-        allow get, create, update, delete: if isEditable() && (contentId == 'email' || contentId == 'push');
+        allow get, delete: if isEditable();
+        allow create, update: if isEditable() && checkContentSecretType();
+
+        function checkContentSecretType() {
+          return (
+              request.resource.data.type == 'email' ||
+              request.resource.data.type == 'push'
+          ) &&
+            request.resource.data.sendAt is timestamp &&
+            request.resource.data.content is string &&
+            request.resource.data.title is string;
+        }
+      }
+    }
+
+    // 参加するイベント情報一覧を格納する
+    match /applications/{userId} {
+      allow get: if isEditable() || checkUserIsSelf(userId); // 編集できる人か自身が取得できる
+      allow create: if checkCreate(); // 自身のみが作成できる（参加承認を除く）
+      allow delete: if checkUserIsSelf(userId); // 自身のみが削除できる
+      allow update, list: if isEditable(); // 編集可能な人が変更できる（参加承認など推定）
+
+      function checkUserIsSelf(userId) {
+        return isAuthenticated() && userId == request.auth.uid;
+      }
+
+      function checkCreate() {
+        return checkUserIsSelf(userId) &&
+          request.resource.data.accepted is bool &&
+          request.resource.data.accepted != true &&
+          request.resource.data.email == request.auth.token.email &&
+          request.resource.data.eventId is string &&
+          get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).published == true;
+      }
+
+      function isEditable() {
+        return isAdminRole() ||
+          request.auth.uid in get(/databases/$(database)/documents/events/$(resource.data.eventId)).editors;
       }
     }
 
     // 特権ユーザ（editor, admin）用ユーザDB
     match /users/{userId} {
-      allow create, delete, list: if isAuthenticated() && isAdminRole(); // 管理者のみ作成・削除可能、一覧表示可能
-      allow update: if isAuthenticated() && (checkUpdate(userId) || isAdminRole()); // 管理者とアカウント本人が更新可能
+      allow delete, list: if isAuthenticated() && isAdminRole(); // 管理者のみ作成・削除可能、一覧表示可能
+      allow create: if isAuthenticated() && isAdminRole() && checkUserTypes();
+      allow update: if isAuthenticated() && (checkUpdate(userId) || isAdminRole()) && checkUserTypes(); // 管理者とアカウント本人が更新可能
       allow get: if isAuthenticated() && (checkUserIsSelf(userId) || isAdminRole()); // 管理者とアカウント本人が取得可能
+
+      function checkUserTypes() {
+        return request.resource.data.email is string &&
+          (!('displayName' in request.resource.data) || request.resource.data.displayName is string) &&
+          (request.resource.data.role == 'ADMIN' || request.resource.data.role == 'EDITOR');
+      }
 
       function checkUserIsSelf(userId) {
         return userId == request.auth.uid;
       }
 
       function checkUpdate(userId) {
-        return checkUserIsSelf(userId) && request.resource.data.role == resource.data.role;
+        return checkUserIsSelf(userId) &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.email == resource.data.email;
       }
     }
   }
