@@ -63,7 +63,8 @@ service cloud.firestore {
       allow get: if isEditable() || checkUserIsSelf(userId); // 編集できる人か自身が取得できる
       allow create: if checkCreate(); // 自身のみが作成できる（参加承認を除く）
       allow delete: if checkUserIsSelf(userId); // 自身のみが削除できる
-      allow update, list: if isEditable(); // 編集可能な人が変更できる（参加承認など推定）
+      allow update: if isEditable() && checkUpdate(); // 編集可能な人が変更できる（参加承認など推定）
+      allow list: if isEditable();
 
       function checkUserIsSelf(userId) {
         return isAuthenticated() && userId == request.auth.uid;
@@ -81,6 +82,11 @@ service cloud.firestore {
       function isEditable() {
         return isAdminRole() ||
           request.auth.uid in get(/databases/$(database)/documents/events/$(resource.data.eventId)).editors;
+      }
+
+      function checkUpdate() {
+        return request.resource.data.eventId == resource.data.eventId &&
+          request.resource.data.email == resource.data.email;
       }
     }
 
