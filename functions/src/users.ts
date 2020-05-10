@@ -5,14 +5,10 @@ export const setUserRole = region('asia-northeast1')
   .firestore.document('/users/{userId}')
   .onWrite(async (snapshot, context) => {
     const { userId } = context.params;
-    await admin.auth().setCustomUserClaims(
-      userId,
-      snapshot.after
-        ? {
-            role: snapshot.after.data()?.role || 'EDITOR',
-          }
-        : {
-            role: null,
-          },
-    );
+    const role = snapshot.after?.data()?.role;
+
+    await admin.auth().setCustomUserClaims(userId, {
+      admin: role === 'ADMIN',
+      editor: role === 'EDITOR',
+    });
   });
