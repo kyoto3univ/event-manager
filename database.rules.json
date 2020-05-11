@@ -1,7 +1,8 @@
 {
   "rules": {
     "events": {
-      ".read": "auth != null"
+      ".read": "auth != null",
+      ".write": "auth.uid == 'functions'"
     }
   }
 }
