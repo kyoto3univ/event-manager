@@ -1,10 +1,15 @@
-import { identityConverter } from '../utils/converter';
+import * as t from 'io-ts';
+import { ioTsConverter } from '../utils/io-types';
 
-export interface UserDocument {
-  id: string;
-  role: 'ADMIN' | 'EDITOR';
-  email: string;
-  displayName?: string;
-}
+export const userDocumentIo = t.intersection([
+  t.type({
+    role: t.union([t.literal('ADMIN'), t.literal('EDITOR')]),
+    email: t.string,
+  }),
+  t.partial({
+    displayName: t.string,
+  }),
+]);
+export type UserDocument = t.TypeOf<typeof userDocumentIo>;
 
-export const userDocumentConverter = identityConverter<UserDocument>();
+export const userDocumentConverter = ioTsConverter(userDocumentIo);

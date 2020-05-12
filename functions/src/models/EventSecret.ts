@@ -1,14 +1,15 @@
-import { Timestamp } from '@google-cloud/firestore';
-import { identityConverter } from '../utils/converter';
+import * as t from 'io-ts';
+import { firestoreTimestamp, ioTsConverter } from '../utils/io-types';
 
-export interface EventSecretDocument {
-  type: 'email' | 'push';
-  title: string;
-  content: string;
-  sendAt: Timestamp;
-  sent: boolean;
-}
+export const eventSecretDocumentIo = t.type({
+  type: t.union([t.literal('email'), t.literal('push')]),
+  title: t.string,
+  content: t.string,
+  sendAt: firestoreTimestamp,
+  sent: t.boolean,
+});
+export type EventSecretDocument = t.TypeOf<typeof eventSecretDocumentIo>;
 
-export const eventSecretDocumentConverter = identityConverter<
-  EventSecretDocument
->();
+export const eventSecretDocumentConverter = ioTsConverter(
+  eventSecretDocumentIo,
+);

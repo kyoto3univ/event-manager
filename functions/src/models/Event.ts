@@ -1,13 +1,18 @@
-import { Timestamp } from '@google-cloud/firestore';
-import { identityConverter } from '../utils/converter';
+import * as t from 'io-ts';
+import { firestoreTimestamp, ioTsConverter } from '../utils/io-types';
 
-export interface EventDocument {
-  title: string;
-  startAt: Timestamp;
-  editors: string[];
-  published: boolean;
-  organization?: string;
-  description: string;
-}
+export const eventDocumentIo = t.intersection([
+  t.type({
+    title: t.string,
+    startAt: firestoreTimestamp,
+    editors: t.array(t.string),
+    published: t.boolean,
+    description: t.string,
+  }),
+  t.partial({
+    organization: t.string,
+  }),
+]);
 
-export const eventDocumentConverter = identityConverter<EventDocument>();
+export type EventDocument = t.TypeOf<typeof eventDocumentIo>;
+export const eventDocumentConverter = ioTsConverter(eventDocumentIo);

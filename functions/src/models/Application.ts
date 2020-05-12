@@ -1,12 +1,13 @@
-import { identityConverter } from '../utils/converter';
+import * as t from 'io-ts';
+import { ioTsConverter } from '../utils/io-types';
 
-export interface ApplicationDocument {
-  id: string; // document id
-  eventId: string; // eventId is just a string, client for visitors should fetch event from realtime database due to rate limit
-  email: string;
-  accepted: boolean;
-}
+export const applicationDocumentIo = t.type({
+  eventId: t.string,
+  email: t.string,
+  accepted: t.boolean,
+});
 
-export const applicationDocumentConverter = identityConverter<
-  ApplicationDocument
->();
+export type ApplicationDocument = t.TypeOf<typeof applicationDocumentIo>;
+export const applicationDocumentConverter = ioTsConverter(
+  applicationDocumentIo,
+);
