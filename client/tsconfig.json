@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "sourceMap": true,
+    "lib": [
+      "es7",
+      "esnext.asynciterable",
+      "dom"
+    ],
+    "moduleResolution": "node",
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "strict": true,
+    "experimentalDecorators": true,
+    "removeComments": false,
+    "pretty": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react",
+    "noEmit": true
+  }
+}
