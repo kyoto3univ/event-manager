@@ -3,6 +3,10 @@
     "events": {
       ".read": "auth != null",
       ".write": "auth.uid == 'functions'"
+    },
+    "push": {
+      ".read": "auth.uid == 'functions'",
+      ".write": "auth.uid == 'functions'"
     }
   }
 }
