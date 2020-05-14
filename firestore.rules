@@ -43,7 +43,7 @@ service cloud.firestore {
 
       // メールコンテンツと通知コンテンツ用
       match /secrets/{contentId} {
-        allow get, delete: if isEditable();
+        allow get, delete, list: if isEditable();
         allow create, update: if isEditable() && checkContentSecretType();
 
         function checkContentSecretType() {
