@@ -16,5 +16,9 @@
   "devDependencies": {
     "prettier": "^2.0.5",
     "tslint": "^6.1.2"
+  },
+  "dependencies": {
+    "typescript": "^3.9.2",
+    "yarn": "^1.22.4"
   }
 }
