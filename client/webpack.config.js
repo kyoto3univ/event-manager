@@ -11,7 +11,7 @@ console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
 const config = async isProd => {
   const apps = await firebaseTools.apps.list('WEB', {});
   const currentApp = apps[0];
-  const __FIREBASE_CONFIG__ = await firebaseTools.apps.sdkconfig(
+  const { sdkConfig } = await firebaseTools.apps.sdkconfig(
     'WEB',
     currentApp.appId,
     {},
@@ -82,7 +82,7 @@ const config = async isProd => {
 
       new webpack.DefinePlugin({
         'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-        __FIREBASE_CONFIG__,
+        __FIREBASE_CONFIG__: JSON.stringify(sdkConfig),
       }),
 
       new HtmlWebpackPlugin({
