@@ -8,4 +8,5 @@ export const AuthActions = actions('Auth', {
   emailRequestFailed: action(),
   callbackInvalid: action(),
   callbackSuccess: action(),
+  claimsUpdate: action<{ admin: boolean; editor: boolean }>(),
 });

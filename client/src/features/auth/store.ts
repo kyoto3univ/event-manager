@@ -6,6 +6,8 @@ interface State {
   user: User | null;
   loggedIn: boolean;
   initialized: boolean;
+  isAdmin: boolean;
+  isEditor: boolean;
   // Login
   emailError: boolean;
   emailSending: boolean;
@@ -24,6 +26,8 @@ export const AuthStore = reducerStore<State>('AuthStore', () => ({
   loggedIn: false,
   callbackInvalid: false,
   callbackProceeded: false,
+  isAdmin: false,
+  isEditor: false,
 }))
   .listen(AuthActions.emailRequestStarted, state => {
     state.emailSending = true;
@@ -56,4 +60,8 @@ export const AuthStore = reducerStore<State>('AuthStore', () => ({
   })
   .listen(AuthActions.callbackSuccess, state => {
     state.callbackProceeded = true;
+  })
+  .listen(AuthActions.claimsUpdate, (state, claims) => {
+    state.isAdmin = claims.admin;
+    state.isEditor = claims.admin || claims.editor;
   });

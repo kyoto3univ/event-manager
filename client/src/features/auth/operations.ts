@@ -22,9 +22,15 @@ export const AuthOps = operations({
     }
   },
   async startAuthMonitor({ dispatch }) {
-    authInstance.onIdTokenChanged(user => {
+    authInstance.onIdTokenChanged(async user => {
       if (user) {
         dispatch(AuthActions.setUser, { user });
+
+        const token = await user.getIdTokenResult();
+        dispatch(AuthActions.claimsUpdate, {
+          admin: !!token.claims.admin,
+          editor: !!token.claims.editor,
+        });
       } else {
         dispatch(AuthActions.setUser, {});
       }
