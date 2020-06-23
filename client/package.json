@@ -51,6 +51,7 @@
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
     "styled-components": "^5.1.1",
-    "typescript": "^3.7.3"
+    "typescript": "^3.7.3",
+    "use-react-router": "^1.0.7"
   }
 }

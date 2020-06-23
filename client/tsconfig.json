@@ -9,7 +9,6 @@
       "dom"
     ],
     "moduleResolution": "node",
-    "declaration": true,
     "allowSyntheticDefaultImports": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
