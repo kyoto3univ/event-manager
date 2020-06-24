@@ -1,35 +1,40 @@
-import { FleurContext } from '@fleur/react';
+import { useFleurContext, useStore } from '@fleur/react';
 import React from 'react';
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 import { GlobalContainer } from '../../components/Container';
 import { Header } from '../../components/Header';
-import { AuthOps } from '../../features/auth';
-import { store } from '../../store';
+import { AuthOps, AuthStore } from '../../features/auth';
+import { AdminEventList } from '../AdminEventList';
 import { LoginView } from '../Login';
 import { LoginCallbackView } from '../LoginCallback';
 
 export const RootView = () => {
+  const { executeOperation } = useFleurContext();
+  const { isAdmin, isEditor } = useStore(getStore => {
+    const { state } = getStore(AuthStore);
+
+    return {
+      isAdmin: state.isAdmin,
+      isEditor: state.isEditor,
+    };
+  });
+
   React.useEffect(() => {
-    store.executeOperation(AuthOps.startAuthMonitor);
+    executeOperation(AuthOps.startAuthMonitor);
   }, []);
 
   return (
-    <FleurContext value={store}>
-      <BrowserRouter>
-        <>
-          <Header />
-          <GlobalContainer>
-            <Switch>
-              <Route path='/login' component={LoginView} exact />
-              <Route
-                path='/login/callback'
-                component={LoginCallbackView}
-                exact
-              />
-            </Switch>
-          </GlobalContainer>
-        </>
-      </BrowserRouter>
-    </FleurContext>
+    <>
+      <Header />
+      <GlobalContainer>
+        <Switch>
+          <Route path='/login' component={LoginView} exact />
+          <Route path='/login/callback' component={LoginCallbackView} exact />
+          {(isAdmin || isEditor) && (
+            <Route path='/admin' exact component={AdminEventList} />
+          )}
+        </Switch>
+      </GlobalContainer>
+    </>
   );
 };

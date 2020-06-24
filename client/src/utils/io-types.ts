@@ -22,3 +22,18 @@ export const ioTsConverter = <C extends t.Any>(
     throw decoded.left;
   },
 });
+
+export const ioTsWithIdConverter = <C extends t.Any>(
+  type: C,
+): firestore.FirestoreDataConverter<C['_A'] & { _id: string }> => {
+  const base = ioTsConverter(type);
+  return {
+    ...base,
+    fromFirestore(snapshot, options) {
+      return {
+        ...base.fromFirestore(snapshot, options),
+        _id: snapshot.id,
+      };
+    },
+  };
+};
