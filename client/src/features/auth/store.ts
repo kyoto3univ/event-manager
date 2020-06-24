@@ -4,6 +4,7 @@ import { AuthActions } from './actions';
 
 interface State {
   user: User | null;
+  userId: string | null;
   loggedIn: boolean;
   initialized: boolean;
   isAdmin: boolean;
@@ -28,6 +29,7 @@ export const AuthStore = reducerStore<State>('AuthStore', () => ({
   callbackProceeded: false,
   isAdmin: false,
   isEditor: false,
+  userId: null,
 }))
   .listen(AuthActions.emailRequestStarted, state => {
     state.emailSending = true;
@@ -47,9 +49,11 @@ export const AuthStore = reducerStore<State>('AuthStore', () => ({
   .listen(AuthActions.setUser, (state, { user }) => {
     if (user && user.emailVerified) {
       state.user = user;
+      state.userId = user.uid;
       state.loggedIn = true;
     } else {
       state.user = null;
+      state.userId = null;
       state.loggedIn = false;
     }
     state.initialized = true;
